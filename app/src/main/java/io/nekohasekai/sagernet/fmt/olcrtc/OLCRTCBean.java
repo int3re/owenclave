@@ -19,6 +19,10 @@ public class OLCRTCBean extends AbstractBean {
     public String dnsServer;
     public String socksHost;
     public Integer socksPort;
+    // vp8channel transport tuning. 0 = unset -> olcrtc core default (fps 30,
+    // batch 64). Higher fps is the main throughput lever (see docs/THROUGHPUT).
+    public Integer vp8Fps;
+    public Integer vp8Batch;
 
     @Override
     public void initializeDefaultValues() {
@@ -30,11 +34,13 @@ public class OLCRTCBean extends AbstractBean {
         if (dnsServer == null) dnsServer = "8.8.8.8:53";
         if (socksHost == null) socksHost = "127.0.0.1";
         if (socksPort == null) socksPort = 8808;
+        if (vp8Fps == null) vp8Fps = 0;
+        if (vp8Batch == null) vp8Batch = 0;
     }
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(1);
+        output.writeInt(2);
         super.serialize(output);
         output.writeString(authProvider);
         output.writeString(transport);
@@ -43,6 +49,8 @@ public class OLCRTCBean extends AbstractBean {
         output.writeString(dnsServer);
         output.writeString(socksHost);
         output.writeInt(socksPort);
+        output.writeInt(vp8Fps == null ? 0 : vp8Fps);
+        output.writeInt(vp8Batch == null ? 0 : vp8Batch);
     }
 
     @Override
@@ -56,6 +64,10 @@ public class OLCRTCBean extends AbstractBean {
         dnsServer = input.readString();
         socksHost = input.readString();
         socksPort = input.readInt();
+        if (version >= 2) {
+            vp8Fps = input.readInt();
+            vp8Batch = input.readInt();
+        }
     }
 
     @Override

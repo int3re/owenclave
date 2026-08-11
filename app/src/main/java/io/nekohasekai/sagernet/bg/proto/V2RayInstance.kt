@@ -75,6 +75,13 @@ import java.net.Socket
                 appendLine("net:")
                 appendLine("  transport: ${bean.transport}")
                 appendLine("  dns: \"${bean.dnsServer}\"")
+                val vp8Fps = bean.vp8Fps ?: 0
+                val vp8Batch = bean.vp8Batch ?: 0
+                if (bean.transport == "vp8channel" && (vp8Fps > 0 || vp8Batch > 0)) {
+                    appendLine("vp8:")
+                    if (vp8Fps > 0) appendLine("  fps: $vp8Fps")
+                    if (vp8Batch > 0) appendLine("  batch_size: $vp8Batch")
+                }
                 appendLine("socks:")
                 appendLine("  host: \"127.0.0.1\"")
                 appendLine("  port: $port")
