@@ -3,14 +3,17 @@
 # cgo enables android interface discovery required by ice
 set -euo pipefail
 
-OLCRTC_COMMIT="${OLCRTC_COMMIT:-513be68c0056eb720a0151d36f662d75cbe8f437}"
+# int3re/olcrtc-fps = upstream olcrtc + connection-level link bonding (comma room
+# list) + vp8.fps support, for the phone VPN. See docs/PHONE-FPS.md / THROUGHPUT.md.
+OLCRTC_REPO="${OLCRTC_REPO:-https://github.com/int3re/olcrtc-fps.git}"
+OLCRTC_COMMIT="${OLCRTC_COMMIT:-da0c5ce75ad0781b4825332e05bdb703dc14afc4}"
 OLCRTC_SRC="${OLCRTC_SRC:-${TMPDIR:-/tmp}/owenclave-olcrtc}"
 OUT_ROOT="${OUT_ROOT:-$(cd "$(dirname "$0")/../../.." && pwd)/app/src/main/jniLibs}"
 TC="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
 
 if [ ! -d "$OLCRTC_SRC/.git" ]; then
   rm -rf "$OLCRTC_SRC"
-  git clone https://github.com/openlibrecommunity/olcrtc.git "$OLCRTC_SRC"
+  git clone "$OLCRTC_REPO" "$OLCRTC_SRC"
 fi
 git -C "$OLCRTC_SRC" fetch --depth 1 origin "$OLCRTC_COMMIT"
 git -C "$OLCRTC_SRC" checkout --detach "$OLCRTC_COMMIT"
