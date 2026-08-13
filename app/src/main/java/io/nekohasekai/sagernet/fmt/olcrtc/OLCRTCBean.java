@@ -7,6 +7,9 @@ import com.esotericsoftware.kryo.io.ByteBufferOutput;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import io.nekohasekai.sagernet.fmt.AbstractBean;
 import io.nekohasekai.sagernet.fmt.KryoConverters;
 
@@ -26,6 +29,10 @@ public class OLCRTCBean extends AbstractBean {
     public Integer vp8Fps;
     public Integer vp8Batch;
     public Integer vp8KcpWnd;
+    // links, when non-empty, makes this a heterogeneous / cross-carrier bond
+    // (e.g. WB Stream + Telemost). Each leg has its own carrier / rooms / pacing;
+    // the flat authProvider/roomId above mirror the first leg for display.
+    public List<OLCRTCLink> links;
 
     @Override
     public void initializeDefaultValues() {
@@ -44,7 +51,7 @@ public class OLCRTCBean extends AbstractBean {
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(3);
+        output.writeInt(4);
         super.serialize(output);
         output.writeString(authProvider);
         output.writeString(transport);
@@ -56,6 +63,18 @@ public class OLCRTCBean extends AbstractBean {
         output.writeInt(vp8Fps == null ? 0 : vp8Fps);
         output.writeInt(vp8Batch == null ? 0 : vp8Batch);
         output.writeInt(vp8KcpWnd == null ? 0 : vp8KcpWnd);
+        int legs = links == null ? 0 : links.size();
+        output.writeInt(legs);
+        for (int i = 0; i < legs; i++) {
+            OLCRTCLink l = links.get(i);
+            output.writeString(l.authProvider);
+            output.writeString(l.transport);
+            output.writeString(l.roomId);
+            output.writeString(l.bind);
+            output.writeInt(l.vp8Fps);
+            output.writeInt(l.vp8Batch);
+            output.writeInt(l.vp8KcpWnd);
+        }
     }
 
     @Override
@@ -75,6 +94,23 @@ public class OLCRTCBean extends AbstractBean {
         }
         if (version >= 3) {
             vp8KcpWnd = input.readInt();
+        }
+        if (version >= 4) {
+            int legs = input.readInt();
+            if (legs > 0) {
+                links = new ArrayList<>(legs);
+                for (int i = 0; i < legs; i++) {
+                    OLCRTCLink l = new OLCRTCLink();
+                    l.authProvider = input.readString();
+                    l.transport = input.readString();
+                    l.roomId = input.readString();
+                    l.bind = input.readString();
+                    l.vp8Fps = input.readInt();
+                    l.vp8Batch = input.readInt();
+                    l.vp8KcpWnd = input.readInt();
+                    links.add(l);
+                }
+            }
         }
     }
 

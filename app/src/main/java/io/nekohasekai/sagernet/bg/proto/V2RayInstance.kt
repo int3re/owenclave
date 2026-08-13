@@ -64,25 +64,52 @@ import java.net.Socket
             // olcrtc resolves a relative `data` dir against the executable dir
             // (read-only nativeLibraryDir on Android), so use an absolute writable path.
             val dataDir = File(SagerNet.application.noBackupFilesDir, "olcrtc_data").apply { mkdirs() }
+            val legs = bean.links
             return buildString {
                 appendLine("mode: cnc")
-                appendLine("auth:")
-                appendLine("  provider: ${bean.authProvider}")
-                appendLine("room:")
-                appendLine("  id: \"${bean.roomId}\"")
                 appendLine("crypto:")
                 appendLine("  key: \"${bean.encryptionKey}\"")
                 appendLine("net:")
                 appendLine("  transport: ${bean.transport}")
                 appendLine("  dns: \"${bean.dnsServer}\"")
-                val vp8Fps = bean.vp8Fps ?: 0
-                val vp8Batch = bean.vp8Batch ?: 0
-                val vp8KcpWnd = bean.vp8KcpWnd ?: 0
-                if (bean.transport == "vp8channel" && (vp8Fps > 0 || vp8Batch > 0 || vp8KcpWnd > 0)) {
-                    appendLine("vp8:")
-                    if (vp8Fps > 0) appendLine("  fps: $vp8Fps")
-                    if (vp8Batch > 0) appendLine("  batch_size: $vp8Batch")
-                    if (vp8KcpWnd > 0) appendLine("  kcp_wnd: $vp8KcpWnd")
+                if (!legs.isNullOrEmpty()) {
+                    // Cross-carrier bond: each leg its own carrier / rooms / pacing.
+                    // A top-level vp8 default keeps vp8channel validation happy; per
+                    // leg vp8 overrides it. No top-level auth/room (the links carry them).
+                    if (bean.transport == "vp8channel") {
+                        appendLine("vp8:")
+                        appendLine("  fps: 60")
+                        appendLine("  batch_size: 64")
+                    }
+                    appendLine("links:")
+                    for (leg in legs) {
+                        for (room in (leg.roomId ?: "").split(',')) {
+                            val r = room.trim()
+                            if (r.isEmpty()) continue
+                            appendLine("  - auth: {provider: ${leg.authProvider}}")
+                            appendLine("    room: {id: \"$r\"}")
+                            if (!leg.bind.isNullOrEmpty()) appendLine("    net: {bind: ${leg.bind}}")
+                            val parts = mutableListOf<String>()
+                            if (leg.vp8Fps > 0) parts.add("fps: ${leg.vp8Fps}")
+                            if (leg.vp8Batch > 0) parts.add("batch_size: ${leg.vp8Batch}")
+                            if (leg.vp8KcpWnd > 0) parts.add("kcp_wnd: ${leg.vp8KcpWnd}")
+                            if (parts.isNotEmpty()) appendLine("    vp8: {${parts.joinToString(", ")}}")
+                        }
+                    }
+                } else {
+                    appendLine("auth:")
+                    appendLine("  provider: ${bean.authProvider}")
+                    appendLine("room:")
+                    appendLine("  id: \"${bean.roomId}\"")
+                    val vp8Fps = bean.vp8Fps ?: 0
+                    val vp8Batch = bean.vp8Batch ?: 0
+                    val vp8KcpWnd = bean.vp8KcpWnd ?: 0
+                    if (bean.transport == "vp8channel" && (vp8Fps > 0 || vp8Batch > 0 || vp8KcpWnd > 0)) {
+                        appendLine("vp8:")
+                        if (vp8Fps > 0) appendLine("  fps: $vp8Fps")
+                        if (vp8Batch > 0) appendLine("  batch_size: $vp8Batch")
+                        if (vp8KcpWnd > 0) appendLine("  kcp_wnd: $vp8KcpWnd")
+                    }
                 }
                 appendLine("socks:")
                 appendLine("  host: \"127.0.0.1\"")
