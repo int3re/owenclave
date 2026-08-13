@@ -19,10 +19,13 @@ public class OLCRTCBean extends AbstractBean {
     public String dnsServer;
     public String socksHost;
     public Integer socksPort;
-    // vp8channel transport tuning. 0 = unset -> olcrtc core default (fps 30,
+    // vp8channel transport tuning. 0 = unset -> olcrtc core default (fps 60,
     // batch 64). Higher fps is the main throughput lever (see docs/THROUGHPUT).
+    // vp8KcpWnd is the KCP send/recv window (segments): WB Stream wants ~8192 to
+    // fill its fat pipe, Telemost ~768 or bufferbloat flaps its liveness.
     public Integer vp8Fps;
     public Integer vp8Batch;
+    public Integer vp8KcpWnd;
 
     @Override
     public void initializeDefaultValues() {
@@ -36,11 +39,12 @@ public class OLCRTCBean extends AbstractBean {
         if (socksPort == null) socksPort = 8808;
         if (vp8Fps == null) vp8Fps = 0;
         if (vp8Batch == null) vp8Batch = 0;
+        if (vp8KcpWnd == null) vp8KcpWnd = 0;
     }
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(2);
+        output.writeInt(3);
         super.serialize(output);
         output.writeString(authProvider);
         output.writeString(transport);
@@ -51,6 +55,7 @@ public class OLCRTCBean extends AbstractBean {
         output.writeInt(socksPort);
         output.writeInt(vp8Fps == null ? 0 : vp8Fps);
         output.writeInt(vp8Batch == null ? 0 : vp8Batch);
+        output.writeInt(vp8KcpWnd == null ? 0 : vp8KcpWnd);
     }
 
     @Override
@@ -67,6 +72,9 @@ public class OLCRTCBean extends AbstractBean {
         if (version >= 2) {
             vp8Fps = input.readInt();
             vp8Batch = input.readInt();
+        }
+        if (version >= 3) {
+            vp8KcpWnd = input.readInt();
         }
     }
 

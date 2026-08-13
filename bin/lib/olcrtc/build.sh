@@ -4,9 +4,11 @@
 set -euo pipefail
 
 # int3re/olcrtc-fps = upstream olcrtc + connection-level link bonding (comma room
-# list) + vp8.fps support, for the phone VPN. See docs/PHONE-FPS.md / THROUGHPUT.md.
+# list) + per-link vp8 fps/batch/KCP-window + cross-carrier bonding (WB Stream +
+# Telemost) for the phone VPN. Pin the feat/telemost-multipath-bonding tip so the
+# core has the kcp_wnd config + fps=60 default. See docs/connection-link.md.
 OLCRTC_REPO="${OLCRTC_REPO:-https://github.com/int3re/olcrtc-fps.git}"
-OLCRTC_COMMIT="${OLCRTC_COMMIT:-da0c5ce75ad0781b4825332e05bdb703dc14afc4}"
+OLCRTC_COMMIT="${OLCRTC_COMMIT:-49173b054104002773b1076bac4bd80db9c15002}"
 OLCRTC_SRC="${OLCRTC_SRC:-${TMPDIR:-/tmp}/owenclave-olcrtc}"
 OUT_ROOT="${OUT_ROOT:-$(cd "$(dirname "$0")/../../.." && pwd)/app/src/main/jniLibs}"
 TC="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"

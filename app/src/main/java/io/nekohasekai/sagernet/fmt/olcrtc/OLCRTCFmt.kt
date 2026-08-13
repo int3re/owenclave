@@ -30,6 +30,7 @@ fun parseOLCRTCLink(link: String): OLCRTCBean {
     var transport = "datachannel"
     var vp8Fps = 0
     var vp8Batch = 0
+    var vp8KcpWnd = 0
     if (qIdx >= 0) {
         val afterQ = authAndTransport.substring(qIdx + 1)
         val ltIdx = afterQ.indexOf('<')
@@ -43,6 +44,7 @@ fun parseOLCRTCLink(link: String): OLCRTCBean {
                 when (kv.substring(0, eq)) {
                     "vp8-fps" -> vp8Fps = kv.substring(eq + 1).toIntOrNull() ?: 0
                     "vp8-batch" -> vp8Batch = kv.substring(eq + 1).toIntOrNull() ?: 0
+                    "kcp-wnd" -> vp8KcpWnd = kv.substring(eq + 1).toIntOrNull() ?: 0
                 }
             }
         } else {
@@ -57,6 +59,7 @@ fun parseOLCRTCLink(link: String): OLCRTCBean {
     bean.encryptionKey = encKey
     bean.vp8Fps = vp8Fps
     bean.vp8Batch = vp8Batch
+    bean.vp8KcpWnd = vp8KcpWnd
 
     return bean
 }
@@ -69,6 +72,7 @@ fun OLCRTCBean.toUri(): String {
     val params = mutableListOf<String>()
     if ((vp8Fps ?: 0) > 0) params.add("vp8-fps=$vp8Fps")
     if ((vp8Batch ?: 0) > 0) params.add("vp8-batch=$vp8Batch")
+    if ((vp8KcpWnd ?: 0) > 0) params.add("kcp-wnd=$vp8KcpWnd")
     if (params.isNotEmpty()) {
         sb.append("<")
         sb.append(params.joinToString("&"))
